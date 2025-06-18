@@ -7,17 +7,22 @@ import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { LogIn } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
-const loginSchema = z.object({
+const registerSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export default function Login() {
-  const { login } = useAuth();
+export default function Register() {
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,29 +30,22 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email, data.password);
+      const success = await registerUser(data.name, data.email, data.password);
       if (success) {
-        // Redirect based on user role
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          if (user.role === "admin") {
-            navigate("/admin");
-          } else {
-            navigate("/dashboard");
-          }
-        }
+        navigate("/dashboard");
       }
     } finally {
       setIsLoading(false);
@@ -58,13 +56,25 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Login to Your Account</h1>
+          <h1 className="text-2xl font-bold">Create an Account</h1>
           <p className="text-slate-600 mt-2">
-            Enter your credentials to access the dashboard
+            Sign up to get started with your new account
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              placeholder="John Doe"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -79,12 +89,7 @@ export default function Login() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between">
-              <Label htmlFor="password">Password</Label>
-              <a href="#" className="text-sm text-blue-600 hover:underline">
-                Forgot password?
-              </a>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
@@ -96,15 +101,28 @@ export default function Login() {
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="••••••••"
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
           <Button
             type="submit"
-            className="w-full"
+            className="w-full mt-6"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : (
+            {isLoading ? "Creating account..." : (
               <>
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign In
+                <UserPlus className="mr-2 h-4 w-4" />
+                Create Account
               </>
             )}
           </Button>
@@ -112,19 +130,9 @@ export default function Login() {
 
         <div className="text-center text-sm mt-6">
           <p>
-            Test accounts:
-            <br />
-            <code className="bg-slate-100 p-1 rounded text-xs">admin@example.com / admin123</code>
-            <br />
-            <code className="bg-slate-100 p-1 rounded text-xs">user@example.com / user123</code>
-          </p>
-        </div>
-
-        <div className="text-center text-sm mt-6">
-          <p>
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
-              Create an account
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Sign in
             </Link>
           </p>
         </div>
