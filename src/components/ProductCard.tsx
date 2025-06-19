@@ -1,46 +1,53 @@
-import React from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Product } from "@/lib/products";
-import { addToCart } from "@/lib/cart";
-import { Link } from "react-router-dom";
-import { toast } from "sonner";
-import { ShoppingCart } from "lucide-react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from './ui/button';
+import { Card, CardContent, CardFooter } from './ui/card';
+import { useCartStore } from '../store/cartStore';
+import { Product } from '../data/products';
 
 interface ProductCardProps {
   product: Product;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
+  const { addItem } = useCartStore();
+  
   const handleAddToCart = () => {
-    addToCart(product, 1);
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.image
+    });
+    
     toast.success(`${product.name} added to cart`);
   };
-
+  
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg">
-      <Link to={`/product/${product.id}`}>
-        <div className="h-48 overflow-hidden">
-          <img 
-            src={product.image} 
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-          />
-        </div>
-        <CardHeader className="p-4 pb-0">
-          <CardTitle className="text-lg">{product.name}</CardTitle>
-        </CardHeader>
-      </Link>
+    <Card className="overflow-hidden transition-all hover:shadow-md">
+      <div className="aspect-square overflow-hidden">
+        <img 
+          src={product.image} 
+          alt={product.name} 
+          className="h-full w-full object-cover transition-transform hover:scale-105"
+        />
+      </div>
       <CardContent className="p-4">
-        <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
-        <div className="mt-2 font-bold text-lg">${product.price.toFixed(2)}</div>
+        <Link to={`/products/${product.id}`}>
+          <h3 className="mb-1 font-semibold">{product.name}</h3>
+        </Link>
+        <p className="text-lg font-bold">${product.price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button 
           onClick={handleAddToCart} 
           className="w-full"
         >
-          <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Add to Cart
         </Button>
       </CardFooter>
     </Card>
