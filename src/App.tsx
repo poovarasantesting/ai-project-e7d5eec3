@@ -1,18 +1,18 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import Login from "@/pages/Login";
-import AdminDashboard from "@/pages/AdminDashboard";
-import UserDashboard from "@/pages/UserDashboard";
-import { AuthProvider } from "@/context/AuthContext";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/auth-context';
+import { Toaster } from '@/components/ui/toaster';
+import Login from '@/pages/Login';
+import Dashboard from '@/pages/Dashboard';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/user" element={<UserDashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
         <Toaster />
       </AuthProvider>
