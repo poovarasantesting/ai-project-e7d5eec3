@@ -1,159 +1,131 @@
-import { useEffect, useState } from "react";
+import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { useToast } from "../hooks/use-toast";
-import { LogOut, ShieldAlert, Users, AlertTriangle, Settings } from "lucide-react";
+import { userAtom, logout, TEST_USERS } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Shield, Users } from "lucide-react";
 
 export default function AdminDashboard() {
+  const [user, setUser] = useAtom(userAtom);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    // Update the time every second
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handleLogout = () => {
+    setUser(logout());
     toast({
-      title: "Admin Logged out",
-      description: "You have been successfully logged out from admin panel.",
+      title: "Logged out",
+      description: "You have been successfully logged out.",
     });
-    navigate("/admin/login");
+    navigate("/");
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <div className="flex justify-between items-center mb-8 border-b pb-4">
-        <div className="flex items-center">
-          <ShieldAlert className="h-8 w-8 text-amber-500 mr-2" />
-          <div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="h-8 w-8 text-indigo-600" />
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Welcome, admin@example.com</p>
           </div>
+          <Button onClick={handleLogout} variant="outline">
+            Logout
+          </Button>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" /> Logout
-        </Button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="border-amber-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Admin Status</CardTitle>
-            <CardDescription>Administrator Access</CardDescription>
+        <Card className="mb-6 border-indigo-100 bg-indigo-50">
+          <CardHeader>
+            <CardTitle className="text-indigo-700">
+              Welcome, Admin {user?.username}!
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <ShieldAlert className="h-8 w-8 text-amber-500 mr-2" />
-              <span className="text-2xl font-bold">Full Access</span>
-            </div>
+            <p className="text-indigo-700">
+              You have full administrative access to the system.
+            </p>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Registered Users</CardTitle>
-            <CardDescription>Total User Accounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-500 mr-2" />
-              <span className="text-2xl font-bold">254</span>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">System Alerts</CardTitle>
-            <CardDescription>Pending Notifications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-red-500 mr-2" />
-              <span className="text-2xl font-bold">3</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
+
+        <div className="grid gap-6 md:grid-cols-2">
           <Card>
-            <CardHeader>
-              <CardTitle>Recent User Activity</CardTitle>
-              <CardDescription>Latest actions by users</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>System Statistics</CardTitle>
+              <Users className="h-5 w-5 text-gray-400" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="border-b pb-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">user@example.com</span>
-                    <span className="text-muted-foreground">2 minutes ago</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Logged in from 192.168.1.105</p>
-                </div>
-                <div className="border-b pb-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">john.doe@example.com</span>
-                    <span className="text-muted-foreground">15 minutes ago</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Updated profile information</p>
-                </div>
-                <div className="border-b pb-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">sarah.smith@example.com</span>
-                    <span className="text-muted-foreground">1 hour ago</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Created new account</p>
+              <dl className="space-y-2">
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Total Users</dt>
+                  <dd className="text-2xl font-bold">{TEST_USERS.length}</dd>
                 </div>
                 <div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">alex.johnson@example.com</span>
-                    <span className="text-muted-foreground">3 hours ago</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Password reset requested</p>
+                  <dt className="text-sm font-medium text-gray-500">Admin Users</dt>
+                  <dd className="text-2xl font-bold">
+                    {TEST_USERS.filter(u => u.role === "admin").length}
+                  </dd>
                 </div>
-              </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Regular Users</dt>
+                  <dd className="text-2xl font-bold">
+                    {TEST_USERS.filter(u => u.role === "user").length}
+                  </dd>
+                </div>
+              </dl>
             </CardContent>
           </Card>
-        </div>
-        
-        <div>
+
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                Admin Controls
-              </CardTitle>
+              <CardTitle>Admin Actions</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Button className="w-full justify-start" variant="outline">
-                  User Management
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  System Settings
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  Security Logs
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  Backup & Restore
-                </Button>
-                <Button className="w-full justify-start text-red-500 hover:text-red-700 hover:bg-red-50" variant="outline">
-                  Emergency Controls
-                </Button>
-              </div>
+            <CardContent className="flex flex-col gap-2">
+              <Button className="justify-start">Manage Users</Button>
+              <Button className="justify-start">System Settings</Button>
+              <Button className="justify-start">View Logs</Button>
+              <Button className="justify-start">Security Settings</Button>
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>All Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {TEST_USERS.map((testUser) => (
+                  <TableRow key={testUser.id}>
+                    <TableCell>{testUser.id}</TableCell>
+                    <TableCell>{testUser.username}</TableCell>
+                    <TableCell className="capitalize">{testUser.role}</TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm">
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

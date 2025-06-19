@@ -1,109 +1,122 @@
-import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useAuth } from '@/contexts/auth-context';
-import { User, Lock } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useAtom } from "jotai";
+import { login, userAtom } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+
+const loginSchema = z.object({
+  username: z.string().min(1, { message: "Username is required" }),
+  password: z.string().min(1, { message: "Password is required" }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const { isAuthenticated, login, loading } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [, setUser] = useAtom(userAtom);
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+  const { toast } = useToast();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
   });
 
-  // If user is already authenticated, redirect to dashboard
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = await login(formData.email, formData.password);
-    if (success) {
-      navigate('/dashboard');
-    }
+  const onSubmit = (data: LoginFormValues) => {
+    setLoading(true);
+    
+    // Simulate network request
+    setTimeout(() => {
+      const user = login(data.username, data.password);
+      
+      if (user) {
+        setUser(user);
+        toast({
+          title: "Login successful",
+          description: `Welcome back, ${user.username}!`,
+        });
+        
+        // Redirect based on role
+        if (user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: "Invalid username or password. Please try again.",
+        });
+      }
+      
+      setLoading(false);
+    }, 1000);
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl font-bold">Login</CardTitle>
+          <CardDescription>
             Enter your credentials to access your account
           </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-
-          <div className="mt-6 space-y-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  Test Credentials
-                </span>
-              </div>
-            </div>
-            
-            <div className="rounded-md bg-muted p-4 text-sm">
-              <div className="font-medium">Admin:</div>
-              <div>Email: admin@example.com</div>
-              <div>Password: admin123</div>
-              
-              <div className="mt-2 font-medium">Regular User:</div>
-              <div>Email: user@example.com</div>
-              <div>Password: user123</div>
-            </div>
+          <div className="rounded-md bg-yellow-100 p-3 text-sm">
+            <p className="font-medium">Test Credentials:</p>
+            <p>User: username: "user", password: "password"</p>
+            <p>Admin: username: "admin", password: "admin123"</p>
           </div>
-        </CardContent>
+        </CardHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                {...register("username")}
+                placeholder="Enter your username"
+              />
+              {errors.username && (
+                <p className="text-sm text-red-500">{errors.username.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                {...register("password")}
+                placeholder="Enter your password"
+              />
+              {errors.password && (
+                <p className="text-sm text-red-500">{errors.password.message}</p>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );

@@ -1,73 +1,38 @@
-// Hard-coded user credentials for testing purposes
-export const TEST_USERS = [
-  {
-    id: "1",
-    email: "user@example.com",
-    password: "password123",
-    name: "Test User",
-    role: "user",
-  },
-  {
-    id: "2",
-    email: "admin@example.com",
-    password: "admin123",
-    name: "Admin User",
-    role: "admin",
-  },
-];
+import { atom } from "jotai";
 
 export interface User {
   id: string;
-  email: string;
-  name: string;
+  username: string;
   role: "user" | "admin";
 }
 
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-}
+// Test credentials
+export const TEST_USERS = [
+  { username: "user", password: "password", id: "1", role: "user" },
+  { username: "admin", password: "admin123", id: "2", role: "admin" },
+];
 
-// Mock authentication functions
-export const login = (email: string, password: string): Promise<User> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const user = TEST_USERS.find(
-        (u) => u.email === email && u.password === password
-      );
-      
-      if (user) {
-        // Omit password from returned user object
-        const { password, ...userWithoutPassword } = user;
-        localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-        resolve(userWithoutPassword as User);
-      } else {
-        reject(new Error("Invalid email or password"));
-      }
-    }, 500); // Simulate network delay
-  });
-};
+// Auth atom to store the current user
+export const userAtom = atom<User | null>(null);
 
-export const logout = (): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      localStorage.removeItem('currentUser');
-      resolve();
-    }, 300);
-  });
-};
-
-export const getCurrentUser = (): User | null => {
-  const userJson = localStorage.getItem('currentUser');
-  if (userJson) {
-    return JSON.parse(userJson) as User;
+// Login function
+export const login = (username: string, password: string): User | null => {
+  const user = TEST_USERS.find(
+    (u) => u.username === username && u.password === password
+  );
+  
+  if (user) {
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role as "user" | "admin",
+    };
   }
+  
   return null;
 };
 
-// Helper function to check if a user has admin privileges
-export const isAdmin = (user: User | null): boolean => {
-  return user?.role === "admin";
+// Logout function
+export const logout = () => {
+  return null;
 };

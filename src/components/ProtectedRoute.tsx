@@ -1,39 +1,54 @@
-import React, { useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { ReactNode, useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAtom } from "jotai";
+import { userAtom } from "@/lib/auth";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requireAdmin?: boolean;
+  children: ReactNode;
+  allowedRoles: string[];
 }
 
-export function ProtectedRoute({ 
+export default function ProtectedRoute({ 
   children, 
-  requireAdmin = false 
+  allowedRoles 
 }: ProtectedRouteProps) {
-  const location = useLocation();
-  const currentUser = getCurrentUser();
-  
-  const isAuthenticated = !!currentUser;
-  const hasAdminAccess = isAdmin(currentUser);
+  const [user] = useAtom(userAtom);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      console.log("User not authenticated, redirecting to login");
-    } else if (requireAdmin && !hasAdminAccess) {
-      console.log("User doesn't have admin privileges, access denied");
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Access denied",
+        description: "Please log in to continue.",
+      });
+    } else if (user && !allowedRoles.includes(user.role)) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient permissions",
+        description: "You don't have permission to access this page.",
+      });
     }
-  }, [isAuthenticated, requireAdmin, hasAdminAccess]);
+  }, [user, allowedRoles, toast]);
 
-  if (!isAuthenticated) {
-    // Redirect to login if not authenticated
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Not logged in, redirect to login
+  if (!user) {
+    return <Navigate to="/" replace />;
   }
 
-  if (requireAdmin && !hasAdminAccess) {
-    // Redirect to dashboard if admin access is required but user is not an admin
-    return <Navigate to="/dashboard" replace />;
+  // Check if user has allowed role
+  if (!allowedRoles.includes(user.role)) {
+    // If user is logged in but doesn't have the right role,
+    // redirect them to the appropriate dashboard
+    if (user.role === "admin") {
+      return <Navigate to="/admin" replace />;
+    } else {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
+  // User is logged in and has an allowed role
   return <>{children}</>;
 }
