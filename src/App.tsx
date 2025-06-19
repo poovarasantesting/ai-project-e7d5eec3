@@ -1,21 +1,26 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@/contexts/auth-context';
 import { Toaster } from '@/components/ui/toaster';
-import Login from '@/pages/Login';
-import Dashboard from '@/pages/Dashboard';
+import LoginPage from '@/pages/LoginPage';
+import DashboardPage from '@/pages/DashboardPage';
+import AdminPage from '@/pages/AdminPage';
+import { useAuthStore } from '@/lib/auth';
 
 function App() {
+  const { isAuthenticated } = useAuthStore();
+
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-        <Toaster />
-      </AuthProvider>
+      <Routes>
+        <Route path="/login" element={
+          isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />
+        } />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/" element={
+          isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
+        } />
+      </Routes>
+      <Toaster />
     </BrowserRouter>
   );
 }
