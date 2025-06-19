@@ -1,56 +1,60 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuthStore, requireAuth } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import React from "react";
+import { getCurrentUser } from "@/lib/auth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
-  const { user, logout } = useAuthStore();
-  const { toast } = useToast();
-  
-  // If not authenticated, redirect to login
-  if (!requireAuth()) {
-    return <Navigate to="/login" />;
-  }
-  
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
-  };
-  
+  const currentUser = getCurrentUser();
+
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6">User Dashboard</h1>
-        
-        <div className="mb-6 p-4 bg-gray-50 rounded-md">
-          <h2 className="text-lg font-medium mb-2">User Information</h2>
-          <p><span className="font-medium">Name:</span> {user?.name}</p>
-          <p><span className="font-medium">Username:</span> {user?.username}</p>
-          <p><span className="font-medium">Role:</span> {user?.role}</p>
-          <p><span className="font-medium">ID:</span> {user?.id}</p>
-        </div>
-        
-        <div className="mb-6">
-          <h2 className="text-lg font-medium mb-2">Actions</h2>
-          <div className="space-y-2">
-            <p>This is a protected user dashboard page. Only logged-in users can see this content.</p>
-            {user?.role === 'admin' && (
-              <div className="mt-2">
-                <p className="text-blue-600">
-                  As an admin, you can also access the <a href="/admin" className="underline">Admin Dashboard</a>.
-                </p>
+      <h1 className="text-3xl font-bold mb-8">User Dashboard</h1>
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <span className="font-medium">Name:</span> {currentUser?.name}
               </div>
-            )}
-          </div>
+              <div>
+                <span className="font-medium">Email:</span> {currentUser?.email}
+              </div>
+              <div>
+                <span className="font-medium">Role:</span> {currentUser?.role}
+              </div>
+              <div>
+                <span className="font-medium">ID:</span> {currentUser?.id}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                <span>Active</span>
+              </div>
+              <p className="text-gray-600">
+                Your account is in good standing. You have full access to all user features.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+        <div className="bg-white p-4 rounded-md border">
+          <p className="text-gray-500 italic">No recent activity to display.</p>
         </div>
-        
-        <Button onClick={handleLogout} variant="outline" className="mt-4">
-          Logout
-        </Button>
       </div>
     </div>
   );

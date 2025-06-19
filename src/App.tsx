@@ -1,23 +1,45 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import UserLogin from "./pages/UserLogin";
-import AdminLogin from "./pages/AdminLogin";
-import UserDashboard from "./pages/UserDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import { Toaster } from "./components/ui/toaster";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { Header } from "@/components/Header";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-export default function App() {
+import HomePage from "@/pages/HomePage";
+import LoginPage from "@/pages/LoginPage";
+import DashboardPage from "@/pages/DashboardPage";
+import AdminPage from "@/pages/AdminPage";
+
+function App() {
   return (
     <BrowserRouter>
-      <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<UserLogin />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        </Routes>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminPage />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </main>
         <Toaster />
-      </main>
+      </div>
     </BrowserRouter>
   );
 }
+
+export default App;
