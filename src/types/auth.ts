@@ -1,12 +1,11 @@
-export interface User {
-  id: number;
-  username: string;
-  password: string;
-  role: "admin" | "user";
+export type User = {
+  id: string;
+  email: string;
   name: string;
-}
+  role: 'admin' | 'user';
+};
 
-export interface AuthState {
-  isAuthenticated: boolean;
+export type AuthState = {
   user: User | null;
-}
+  isAuthenticated: boolean;
+};

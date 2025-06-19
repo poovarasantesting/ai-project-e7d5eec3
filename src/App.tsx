@@ -1,39 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
-import { AuthProvider } from "./contexts/AuthContext";
-import Login from "./pages/Login";
-import AdminDashboard from "./pages/AdminDashboard";
-import UserDashboard from "./pages/UserDashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "@/context/auth-context";
+import { Header } from "@/components/header";
+import HomePage from "@/pages/home";
+import LoginPage from "@/pages/login";
+import DashboardPage from "@/pages/dashboard";
+import AdminPage from "@/pages/admin";
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Toaster position="top-right" />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute requiredRole="user">
-                <UserDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
+        <div className="min-h-screen flex flex-col bg-gray-50">
+          <Header />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
       </AuthProvider>
     </BrowserRouter>
   );
 }
-
-export default App;
