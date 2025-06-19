@@ -1,38 +1,51 @@
-import { atom } from "jotai";
-
+// Simple auth management with local storage
 export interface User {
   id: string;
-  username: string;
-  role: "user" | "admin";
+  name: string;
+  email: string;
 }
 
-// Test credentials
-export const TEST_USERS = [
-  { username: "user", password: "password", id: "1", role: "user" },
-  { username: "admin", password: "admin123", id: "2", role: "admin" },
+// Sample users
+const DEMO_USERS = [
+  {
+    id: "1",
+    name: "Demo User",
+    email: "user@example.com",
+    password: "password123"
+  },
+  {
+    id: "2",
+    name: "Admin User",
+    email: "admin@example.com",
+    password: "admin123"
+  }
 ];
 
-// Auth atom to store the current user
-export const userAtom = atom<User | null>(null);
-
-// Login function
-export const login = (username: string, password: string): User | null => {
-  const user = TEST_USERS.find(
-    (u) => u.username === username && u.password === password
+export function login(email: string, password: string): User | null {
+  // Find the user by email and password
+  const user = DEMO_USERS.find(
+    u => u.email === email && u.password === password
   );
   
   if (user) {
-    return {
-      id: user.id,
-      username: user.username,
-      role: user.role as "user" | "admin",
-    };
+    // Store user data in localStorage (excluding password)
+    const { password, ...userData } = user;
+    localStorage.setItem("user", JSON.stringify(userData));
+    return userData;
   }
   
   return null;
-};
+}
 
-// Logout function
-export const logout = () => {
-  return null;
-};
+export function logout(): void {
+  localStorage.removeItem("user");
+}
+
+export function getCurrentUser(): User | null {
+  const userData = localStorage.getItem("user");
+  return userData ? JSON.parse(userData) : null;
+}
+
+export function isAuthenticated(): boolean {
+  return !!getCurrentUser();
+}
