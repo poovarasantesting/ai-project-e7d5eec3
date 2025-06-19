@@ -1,126 +1,97 @@
-import { useAuth } from "../contexts/AuthContext";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { users } from "../data/users";
-import { LogOut, Users } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, LogOut, Users } from "lucide-react";
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { currentUser, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/");
+      return;
+    }
+    
+    if (currentUser?.role !== "admin") {
+      navigate("/user");
+    }
+  }, [isAuthenticated, currentUser, navigate]);
+
+  if (!isAuthenticated || currentUser?.role !== "admin") {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <div className="flex items-center">
+            <Shield className="h-8 w-8 text-indigo-600 mr-3" />
+            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          </div>
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-700">
-              Logged in as <span className="font-medium">{user?.name}</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
+            <span className="text-sm text-gray-500">Logged in as <span className="font-medium text-indigo-600">{currentUser.username}</span></span>
+            <Button variant="outline" onClick={logout} size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6 flex items-center">
-            <Users className="h-6 w-6 text-gray-500 mr-2" />
-            <h2 className="text-lg font-medium text-gray-900">User Management</h2>
-          </div>
-          <div className="border-t border-gray-200">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Username
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {user.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.username}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.role === "admin" 
-                            ? "bg-purple-100 text-purple-800" 
-                            : "bg-green-100 text-green-800"
-                        }`}>
-                          {user.role}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Users</CardTitle>
+              <CardDescription>Manage system users</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-blue-500 mr-3" />
+                <div>
+                  <p className="text-2xl font-bold">2</p>
+                  <p className="text-sm text-gray-500">Total users</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="mt-4 w-full">
+                Manage Users
+              </Button>
+            </CardContent>
+          </Card>
 
-        <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg font-medium text-gray-900">Admin Stats</h2>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              Overview of system metrics
-            </p>
-          </div>
-          <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">Total Users</dt>
-                <dd className="mt-1 text-sm text-gray-900">{users.length}</dd>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Analytics</CardTitle>
+              <CardDescription>System performance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-20 flex items-center justify-center">
+                <p className="text-sm text-gray-500">Analytics dashboard coming soon</p>
               </div>
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">Admin Users</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {users.filter(u => u.role === "admin").length}
-                </dd>
+              <Button variant="ghost" size="sm" className="mt-4 w-full">
+                View Analytics
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Settings</CardTitle>
+              <CardDescription>System configuration</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-20 flex items-center justify-center">
+                <p className="text-sm text-gray-500">Manage system settings</p>
               </div>
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">Regular Users</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {users.filter(u => u.role === "user").length}
-                </dd>
-              </div>
-              <div className="sm:col-span-1">
-                <dt className="text-sm font-medium text-gray-500">System Status</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </dd>
-              </div>
-            </dl>
-          </div>
+              <Button variant="ghost" size="sm" className="mt-4 w-full">
+                Configure
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
