@@ -1,134 +1,156 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 
-const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
+type UserRole = 'user' | 'admin';
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+// Test credentials
+const TEST_CREDENTIALS = {
+  admin: {
+    email: 'admin@example.com',
+    password: 'admin123'
+  },
+  user: {
+    email: 'user@example.com',
+    password: 'user123'
+  }
+};
 
 export default function Login() {
-  const { login, isAuthenticated, user } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('user');
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  });
 
-  // Redirect if already logged in
-  if (isAuthenticated) {
-    navigate(user?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
-    return null;
-  }
-
-  const onSubmit = (data: LoginFormValues) => {
-    const success = login(data.username, data.password);
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (success) {
-      const redirectTo = user?.role === "admin" ? "/admin" : "/dashboard";
-      navigate(redirectTo, { replace: true });
+    const credentials = role === 'admin' ? TEST_CREDENTIALS.admin : TEST_CREDENTIALS.user;
+    
+    if (email === credentials.email && password === credentials.password) {
+      // Store login info in localStorage
+      localStorage.setItem('authUser', JSON.stringify({ email, role }));
+      
+      toast({
+        title: "Login successful",
+        description: `Welcome ${role === 'admin' ? 'Administrator' : 'User'}!`,
+      });
+      
+      // Redirect based on role
+      navigate(role === 'admin' ? '/admin' : '/dashboard');
+    } else {
+      toast({
+        title: "Login failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Login</h1>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium">
-              Username
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="username"
-                type="text"
-                className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                  errors.username ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Enter your username"
-                {...register("username")}
-              />
-            </div>
-            {errors.username && (
-              <p className="text-red-500 text-sm">{errors.username.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                className={`w-full pl-10 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Enter your password"
-                {...register("password")}
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <Eye className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-red-500 text-sm">{errors.password.message}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <div className="text-sm text-gray-600">
-            <h3 className="font-semibold mb-2">Test Credentials:</h3>
-            <p><span className="font-medium">Admin:</span> username: admin / password: admin123</p>
-            <p><span className="font-medium">User:</span> username: john / password: pass123</p>
-            <p><span className="font-medium">User:</span> username: sarah / password: pass456</p>
-          </div>
-        </div>
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Login</CardTitle>
+          <CardDescription className="text-center">
+            Sign in to your account to continue
+          </CardDescription>
+        </CardHeader>
+        
+        <Tabs defaultValue="user" onValueChange={(value) => setRole(value as UserRole)} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="user">User</TabsTrigger>
+            <TabsTrigger value="admin">Admin</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="user">
+            <form onSubmit={handleLogin}>
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="user@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <a href="#" className="text-xs text-blue-500 hover:underline">
+                      Forgot password?
+                    </a>
+                  </div>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="text-xs text-gray-500">
+                  <p>Test credentials:</p>
+                  <p>Email: user@example.com</p>
+                  <p>Password: user123</p>
+                </div>
+              </CardContent>
+              
+              <CardFooter>
+                <Button type="submit" className="w-full">Sign In</Button>
+              </CardFooter>
+            </form>
+          </TabsContent>
+          
+          <TabsContent value="admin">
+            <form onSubmit={handleLogin}>
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin-email">Email</Label>
+                  <Input 
+                    id="admin-email" 
+                    type="email" 
+                    placeholder="admin@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-password">Password</Label>
+                  <Input 
+                    id="admin-password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="text-xs text-gray-500">
+                  <p>Test credentials:</p>
+                  <p>Email: admin@example.com</p>
+                  <p>Password: admin123</p>
+                </div>
+              </CardContent>
+              
+              <CardFooter>
+                <Button type="submit" className="w-full">Admin Sign In</Button>
+              </CardFooter>
+            </form>
+          </TabsContent>
+        </Tabs>
+      </Card>
     </div>
   );
 }
