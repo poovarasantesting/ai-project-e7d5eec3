@@ -1,28 +1,23 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
-import LoginPage from '@/pages/LoginPage';
-import DashboardPage from '@/pages/DashboardPage';
-import AdminPage from '@/pages/AdminPage';
-import { useAuthStore } from '@/lib/auth';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import UserLogin from "./pages/UserLogin";
+import AdminLogin from "./pages/AdminLogin";
+import UserDashboard from "./pages/UserDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import { Toaster } from "./components/ui/toaster";
 
-function App() {
-  const { isAuthenticated } = useAuthStore();
-
+export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={
-          isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />
-        } />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/" element={
-          isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
-        } />
-      </Routes>
-      <Toaster />
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<UserLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Routes>
+        <Toaster />
+      </main>
     </BrowserRouter>
   );
 }
-
-export default App;

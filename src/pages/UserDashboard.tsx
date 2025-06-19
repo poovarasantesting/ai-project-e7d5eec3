@@ -1,101 +1,125 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, LogOut, FileText, Bell, BookOpen } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { useToast } from "../hooks/use-toast";
+import { LogOut, User, Clock, BarChart } from "lucide-react";
 
 export default function UserDashboard() {
-  const { currentUser, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/");
-    }
-  }, [isAuthenticated, navigate]);
+    // Update the time every second
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogout = () => {
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+    navigate("/login");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <User className="h-8 w-8 text-blue-500 mr-3" />
-            <h1 className="text-2xl font-bold text-gray-900">User Dashboard</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-500">Logged in as <span className="font-medium text-blue-500">{currentUser?.username}</span></span>
-            <Button variant="outline" onClick={logout} size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
+    <div className="container mx-auto p-4 max-w-6xl">
+      <div className="flex justify-between items-center mb-8 border-b pb-4">
+        <div>
+          <h1 className="text-3xl font-bold">User Dashboard</h1>
+          <p className="text-muted-foreground">Welcome, user@example.com</p>
         </div>
-      </header>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" /> Logout
+        </Button>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">My Documents</CardTitle>
-              <CardDescription>Your saved documents</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <FileText className="h-8 w-8 text-blue-500 mr-3" />
-                <div>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-sm text-gray-500">Documents</p>
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Account Status</CardTitle>
+            <CardDescription>User Level Access</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <User className="h-8 w-8 text-blue-500 mr-2" />
+              <span className="text-2xl font-bold">Active</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Current Time</CardTitle>
+            <CardDescription>Local System Time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <Clock className="h-8 w-8 text-green-500 mr-2" />
+              <span className="text-2xl font-bold">
+                {currentTime.toLocaleTimeString()}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Activity Score</CardTitle>
+            <CardDescription>Your Activity Level</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <BarChart className="h-8 w-8 text-purple-500 mr-2" />
+              <span className="text-2xl font-bold">75%</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>Your latest account activity</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="border-b pb-2">
+              <div className="flex justify-between">
+                <span className="font-medium">Login</span>
+                <span className="text-muted-foreground">Just now</span>
               </div>
-              <Button variant="ghost" size="sm" className="mt-4 w-full">
-                View Documents
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Notifications</CardTitle>
-              <CardDescription>Recent alerts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <Bell className="h-8 w-8 text-blue-500 mr-3" />
-                <div>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-sm text-gray-500">New notifications</p>
-                </div>
+              <p className="text-sm text-muted-foreground">Successful login from your current device</p>
+            </div>
+            <div className="border-b pb-2">
+              <div className="flex justify-between">
+                <span className="font-medium">Password Changed</span>
+                <span className="text-muted-foreground">3 days ago</span>
               </div>
-              <Button variant="ghost" size="sm" className="mt-4 w-full">
-                View All
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Knowledge Base</CardTitle>
-              <CardDescription>Help and resources</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <BookOpen className="h-8 w-8 text-blue-500 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-500">Access guides and tutorials</p>
-                </div>
+              <p className="text-sm text-muted-foreground">You updated your account password</p>
+            </div>
+            <div className="border-b pb-2">
+              <div className="flex justify-between">
+                <span className="font-medium">Profile Updated</span>
+                <span className="text-muted-foreground">1 week ago</span>
               </div>
-              <Button variant="ghost" size="sm" className="mt-4 w-full">
-                Browse Resources
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+              <p className="text-sm text-muted-foreground">You updated your profile information</p>
+            </div>
+            <div>
+              <div className="flex justify-between">
+                <span className="font-medium">Account Created</span>
+                <span className="text-muted-foreground">1 month ago</span>
+              </div>
+              <p className="text-sm text-muted-foreground">Your account was created</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
