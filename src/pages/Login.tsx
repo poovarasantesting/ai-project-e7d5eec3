@@ -1,101 +1,134 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useAuth } from "../contexts/AuthContext";
 import { z } from "zod";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { Eye, EyeOff, Lock, User } from "lucide-react";
 
-const formSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-  const { toast } = useToast();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const [showPassword, setShowPassword] = useState(false);
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
       password: "",
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
-    try {
-      await login(data.username, data.password);
-      toast({
-        title: "Login successful",
-        description: "Welcome to the chat app!",
-      });
-      navigate("/chat");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-      });
-    } finally {
-      setIsLoading(false);
+  // Redirect if already logged in
+  if (isAuthenticated) {
+    navigate(user?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    return null;
+  }
+
+  const onSubmit = (data: LoginFormValues) => {
+    const success = login(data.username, data.password);
+    
+    if (success) {
+      const redirectTo = user?.role === "admin" ? "/admin" : "/dashboard";
+      navigate(redirectTo, { replace: true });
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Chat App</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access the chat
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter your username" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold">Login</h1>
+          <p className="text-gray-600 mt-2">Sign in to your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-sm font-medium">
+              Username
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <User className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="username"
+                type="text"
+                className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                  errors.username ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Enter your username"
+                {...register("username")}
               />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Enter your password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            {errors.username && (
+              <p className="text-red-500 text-sm">{errors.username.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Lock className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                className={`w-full pl-10 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Enter your password"
+                {...register("password")}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-400" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-red-500 text-sm">{errors.password.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            {isSubmitting ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center">
+          <div className="text-sm text-gray-600">
+            <h3 className="font-semibold mb-2">Test Credentials:</h3>
+            <p><span className="font-medium">Admin:</span> username: admin / password: admin123</p>
+            <p><span className="font-medium">User:</span> username: john / password: pass123</p>
+            <p><span className="font-medium">User:</span> username: sarah / password: pass456</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

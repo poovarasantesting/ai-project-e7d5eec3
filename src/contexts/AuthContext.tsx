@@ -1,67 +1,58 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
+import { User, AuthState } from "../types/auth";
+import { users } from "../data/users";
+import { toast } from "sonner";
 
-interface User {
-  username: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (username: string, password: string) => Promise<void>;
+interface AuthContextType extends AuthState {
+  login: (username: string, password: string) => boolean;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function useAuth() {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    user: null,
+  });
+
+  const login = (username: string, password: string): boolean => {
+    const user = users.find(
+      (u) => u.username === username && u.password === password
+    );
+
+    if (user) {
+      setAuthState({
+        isAuthenticated: true,
+        user,
+      });
+      toast.success(`Welcome back, ${user.name}!`);
+      return true;
+    }
+    
+    toast.error("Invalid username or password");
+    return false;
+  };
+
+  const logout = () => {
+    setAuthState({
+      isAuthenticated: false,
+      user: null,
+    });
+    toast.info("You have been logged out");
+  };
+
+  return (
+    <AuthContext.Provider value={{ ...authState, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    // Check for stored user data on component mount
-    const storedUser = localStorage.getItem("chatAppUser");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const login = async (username: string, password: string): Promise<void> => {
-    // This is a simple simulation - in a real app, you'd call an API
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simple validation - in a real app, you'd verify against a backend
-        if (password.length >= 6) {
-          const user = { username };
-          localStorage.setItem("chatAppUser", JSON.stringify(user));
-          setUser(user);
-          resolve();
-        } else {
-          reject(new Error("Invalid credentials"));
-        }
-      }, 1000);
-    });
-  };
-
-  const logout = () => {
-    localStorage.removeItem("chatAppUser");
-    setUser(null);
-  };
-
-  const value = {
-    user,
-    login,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
